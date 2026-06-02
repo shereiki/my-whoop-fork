@@ -1,0 +1,55 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Write Secrets.xcconfig
+        run: |
+          cat > ios/OpenWhoop/Config/Secrets.xcconfig << 'XCCONFIG'
+          WHOOP_BASE_URL = http:/$()/193.122.156.200:8770
+          WHOOP_API_KEY = df5d926ef84a2d61c4e03b5ae57f71861bc9687719a6b09bb7d88edcb9ed6d0e
+          WHOOP_DEVICE_ID = sameer-whoop
+          XCCONFIG
+
+      - name: Generate Xcode project
+        run: cd ios && xcodegen generate
+
+      - name: Build IPA
+        run: |
+          cd ios
+          xcodebuild \
+            -project OpenWhoop.xcodeproj \
+            -scheme OpenWhoop \
+            -configuration Debug \
+            -sdk iphoneos \
+            -derivedDataPath ../build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1
+
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/Build/Products/Debug-iphoneos/OpenWhoop.app Payload/
+          zip -r OpenWhoop.ipa Payload
+          rm -rf Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenWhoop.ipa
+          path: OpenWhoop.ipa
+          retention-days: 7
