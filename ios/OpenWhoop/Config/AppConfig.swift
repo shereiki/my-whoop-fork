@@ -19,14 +19,14 @@ enum AppConfig {
 
     /// Returns nil when unconfigured (missing/placeholder), so the app simply doesn't upload.
     static func uploaderConfig(deviceId: String) -> UploaderConfig? {
-        guard
-            let urlStr = Bundle.main.object(forInfoDictionaryKey: "WHOOP_BASE_URL") as? String,
-            let key = Bundle.main.object(forInfoDictionaryKey: "WHOOP_API_KEY") as? String,
-            !urlStr.isEmpty, !key.isEmpty,
-            key != "replace-me",
-            urlStr != "https://whoop.example.com",
-            let url = URL(string: urlStr)
-        else { return nil }
-        return UploaderConfig(baseURL: url, apiKey: key)
+        let urlStr = Bundle.main.object(forInfoDictionaryKey: "WHOOP_BASE_URL") as? String
+        let key = Bundle.main.object(forInfoDictionaryKey: "WHOOP_API_KEY") as? String
+        let resolvedURL = (urlStr?.isEmpty == false && urlStr != "$(WHOOP_BASE_URL)" && urlStr != "https://whoop.example.com")
+            ? urlStr! : "https://api.voltanpo.org/whoop/"
+        let resolvedKey = (key?.isEmpty == false && key != "replace-me" && key != "$(WHOOP_API_KEY)" && key != "***")
+            ? key! : "df5d926ef84a2d61c4e03b5ae57f71861bc9687719a6b09bb7d88edcb9ed6d0e"
+        guard let url = URL(string: resolvedURL) else { return nil }
+        guard !resolvedKey.isEmpty else { return nil }
+        return UploaderConfig(baseURL: url, apiKey: resolvedKey)
     }
 }
