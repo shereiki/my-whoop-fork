@@ -17,12 +17,12 @@ enum AppConfig {
         return "my-whoop"
     }
 
-    /// Returns nil when unconfigured (missing/placeholder), so the app simply doesn't upload.
+    /// Always uses the HTTPS tunnel for iOS ATS compatibility.
     static func uploaderConfig(deviceId: String) -> UploaderConfig? {
         let urlStr = Bundle.main.object(forInfoDictionaryKey: "WHOOP_BASE_URL") as? String
         let key = Bundle.main.object(forInfoDictionaryKey: "WHOOP_API_KEY") as? String
-        let resolvedURL = (urlStr?.isEmpty == false && urlStr != "$(WHOOP_BASE_URL)" && urlStr != "https://whoop.example.com")
-            ? urlStr! : "https://api.voltanpo.org/whoop/"
+        // Always prefer HTTPS tunnel — iOS ATS blocks HTTP to public IPs
+        let resolvedURL = "https://api.voltanpo.org/whoop/"
         let resolvedKey = (key?.isEmpty == false && key != "replace-me" && key != "$(WHOOP_API_KEY)" && key != "***")
             ? key! : "df5d926ef84a2d61c4e03b5ae57f71861bc9687719a6b09bb7d88edcb9ed6d0e"
         guard let url = URL(string: resolvedURL) else { return nil }
